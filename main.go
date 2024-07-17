@@ -9,20 +9,18 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-// ConsulClient インターフェースの定義
 type ConsulClient interface {
 	ForceLeave(node string) error
 	PruneNode(node string) error
 }
 
-// MyConsulClient structとそのメソッドの定義
 type MyConsulClient struct {
 	client *api.Client
 }
 
 func (m *MyConsulClient) ForceLeave(node string) error {
 	agent := m.client.Agent()
-	return agent.ForceLeave(node)
+	return agent.ForceLeavePrune(node)
 }
 
 func (m *MyConsulClient) PruneNode(node string) error {
@@ -37,11 +35,9 @@ func (m *MyConsulClient) PruneNode(node string) error {
 func main() {
 	var nodeName string
 	var consulAddress string
-	var prune bool
 
 	flag.StringVar(&nodeName, "node", "", "Name of the node to force leave")
 	flag.StringVar(&consulAddress, "address", "http://localhost:8500", "Consul server address")
-	flag.BoolVar(&prune, "prune", false, "Prune node after forcing it to leave")
 	flag.Parse()
 
 	if nodeName == "" {
@@ -50,8 +46,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Consulクライアントの設定
-	config := api.DefaultConfig()
+	config := &api.Config{
+		Address: consulAddress,
+		Scheme:  "http",
+	}
 	config.Address = consulAddress
 
 	// Consulクライアントを作成
@@ -71,14 +69,11 @@ func main() {
 
 	fmt.Printf("Node %s has been forcefully removed from the cluster\n", nodeName)
 
-	// pruneオプションが指定されている場合、ノードを削除
-	if prune {
-		err = pruneNode(myConsulClient, nodeName)
-		if err != nil {
-			log.Fatalf("Error pruning node: %v", err)
-		}
-		fmt.Printf("Node %s has been pruned from the cluster\n", nodeName)
+	err = pruneNode(myConsulClient, nodeName)
+	if err != nil {
+		log.Fatalf("Error pruning node: %v", err)
 	}
+	fmt.Printf("Node %s has been pruned from the cluster\n", nodeName)
 }
 
 // forceLeave 関数
