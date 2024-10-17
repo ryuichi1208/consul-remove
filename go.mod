@@ -2,7 +2,7 @@ module github.com/ryuichi1208/consul-remove
 
 go 1.22.2
 
-require github.com/hashicorp/consul/api v1.29.2
+require github.com/hashicorp/consul/api v1.30.0
 
 require (
 	github.com/armon/go-metrics v0.4.1 // indirect
